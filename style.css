@@ -1,0 +1,6 @@
+.o-hidden {
+  overflow: hidden;
+}
+.nav {
+  transition: transform 0.3s;
+}
