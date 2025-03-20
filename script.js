@@ -1,112 +1,103 @@
-const toggleRight = document.querySelector(".toggle-right");
-const toggleLeft = document.querySelector(".toggle-left");
-const navbar = document.querySelector(".nav");
-const navItems = document.querySelectorAll(".nav-item");
+class StdTabView {
+  //static navbarMovementStep = 100;
+  constructor(step) {
+    //here we are cathing all necessary document elements which we will use for manipulation
+    this.container = document.querySelector(".std-tab-view");
+    this.navbox = this.container.querySelector(".nav-box");
+    this.navbar = this.container.querySelector(".nav");
+    this.navItems = this.navbar.querySelectorAll(".nav-item");
+    this.toggleRightBtn = this.container.querySelector(".toggle-right");
+    this.toggleLeftBtn = this.container.querySelector(".toggle-left");
+    this.toggleBtns = this.container.querySelectorAll(".toggle");
 
-var navItemsWidth = 0;
-navItems.forEach((element) => {
-  navItemsWidth += element.clientWidth;
-});
-var navbarStartPosition = 0;
-var navbarEndPosition = navItemsWidth - navbar.clientWidth;
-var navbarCurrentPosition = navbarStartPosition;
-var navbarMovementStep = 100;
+    //other static or calculated variables
+    this.navItemsWidth = (() => {
+      let i = 0;
+      this.navItems.forEach((element) => {
+        i += element.clientWidth;
+      });
+      return i;
+    })();
+    this.navItemsWidth = Array.from(this.navItems).reduce((totalWidth, el) => {
+      return totalWidth + el.clientWidth;
+    }, 0);
+    this.navbarStartPosition = 0;
+    this.navbarEndPosition = this.navItemsWidth - this.navbar.clientWidth;
+    this.navbarCurrentPosition = this.navbarStartPosition;
+    this.navbarMovementStep = step;
 
-function logValues(title) {
-  const navbarStartPositionLog = {
-    name: "navbarStartPosition",
-    value: navbarStartPosition,
-  };
-  const navbarEndPositionLog = {
-    name: "navbarEndPosition",
-    value: navbarEndPosition,
-  };
-  const navItemsWidthLog = { name: "navItemsWidth", value: navItemsWidth };
-  const navbarCurrentPositionLog = {
-    name: "navbarCurrentPosition",
-    value: navbarCurrentPosition,
-  };
-  const navbarMovementStepLog = {
-    name: "navbarMovementStep",
-    value: navbarMovementStep,
-  };
-  console.group();
-  console.log("%c" + title, "background: #222; color:rgb(85, 218, 138)");
-  console.table([
-    navbarStartPositionLog,
-    navbarEndPositionLog,
-    navItemsWidthLog,
-    navbarCurrentPositionLog,
-    navbarMovementStepLog,
-  ]);
-  console.groupEnd();
-}
-logValues("document ready");
+    //create events
+    this.#evToggleRight();
+    this.#evToggleLeft();
+    this.#evWindowResize();
+    //init visibility of buttons
+    this.#toggleButtonsVisibility();
+  } //end of class constuctor
 
-toggleRight.addEventListener("click", function () {
-  logValues("toggleRight");
-  if (navbarCurrentPosition < navbarEndPosition) {
-    navbarCurrentPosition =
-      navbarCurrentPosition + navbarMovementStep > navbarEndPosition
-        ? navbarEndPosition
-        : navbarCurrentPosition + navbarMovementStep;
-    navbar.style.transform = "translateX(" + -navbarCurrentPosition + "px)";
+  //methods
+  logValues(title) {
+    const properties = Object.keys(this)
+      .filter((key) => typeof this[key] !== "object")
+      .map((key, index) => ({
+        "variable name": key,
+        "variable value": this[key],
+      }));
+    if (title)
+      console.log("%c" + title, "background: #222; color:rgb(85, 218, 138)");
+    console.table(properties);
   }
-  logValues("toggleRight2");
-});
-
-toggleLeft.addEventListener("click", function () {
-  logValues("toggleLeft");
-
-  if (navbarCurrentPosition >= navbarStartPosition) {
-    navbarCurrentPosition =
-      navbarCurrentPosition - navbarMovementStep < navbarStartPosition
-        ? navbarStartPosition
-        : navbarCurrentPosition - navbarMovementStep;
-
-    navbar.style.transform = "translateX(" + -navbarCurrentPosition + "px)";
-
-    logValues("toggleLeft2");
+  //buttons private events action
+  #evToggleRight() {
+    this.toggleRightBtn.addEventListener("click", () => {
+      if (this.navbarCurrentPosition < this.navbarEndPosition) {
+        this.navbarCurrentPosition =
+          this.navbarCurrentPosition + this.navbarMovementStep >
+          this.navbarEndPosition
+            ? this.navbarEndPosition
+            : this.navbarCurrentPosition + this.navbarMovementStep;
+        this.navbar.style.transform =
+          "translateX(" + -this.navbarCurrentPosition + "px)";
+      }
+    });
   }
-});
-function toggleButtonsVisibility() {
-  if (
-    navItemsWidth + document.querySelector(".flex-shrink-0").clientWidth * 2 >=
-    document.querySelector(".nav-container").clientWidth
-  ) {
-    document
-      .querySelectorAll(".toggle")
-      .forEach((el) => (el.style.visibility = "visible"));
-  } else {
-    document
-      .querySelectorAll(".toggle")
-      .forEach((el) => (el.style.visibility = "hidden"));
+  #evToggleLeft() {
+    this.toggleLeftBtn.addEventListener("click", () => {
+      if (this.navbarCurrentPosition >= this.navbarStartPosition) {
+        this.navbarCurrentPosition =
+          this.navbarCurrentPosition - this.navbarMovementStep <
+          this.navbarStartPosition
+            ? this.navbarStartPosition
+            : this.navbarCurrentPosition - this.navbarMovementStep;
+        this.navbar.style.transform =
+          "translateX(" + -this.navbarCurrentPosition + "px)";
+      }
+    });
   }
-}
-toggleButtonsVisibility();
-window.addEventListener("resize", function () {
-  let navbar = document.querySelector(".nav");
-  navbarCurrentPosition = navbarStartPosition;
-  //navbarStartPosition = Math.round(navbar.clientWidth / 2) + 5;
-  navbarStartPosition = 0;
-  navbarEndPosition = navItemsWidth - navbar.clientWidth;
-  //   navbarEndPosition = Math.round(
-  //     navbar.clientWidth / 2 - (navItemsWidth - navbar.clientWidth) - 5
-  //   );
-  logValues("window resize");
-  navbar.style.transition = "transform 0s";
-  navbar.style.transform = "translateX(" + navbarStartPosition + "px)";
+  #toggleButtonsVisibility() {
+    let btnsDivsWidth = Array.from(this.toggleBtns).reduce(
+      (totalWidth, btn) => {
+        return totalWidth + btn.parentElement.clientWidth;
+      },
+      0
+    );
+    if (this.navItemsWidth + btnsDivsWidth >= this.container.clientWidth) {
+      this.toggleBtns.forEach((b) => (b.style.visibility = "visible"));
+    } else {
+      this.toggleBtns.forEach((b) => (b.style.visibility = "hidden"));
+    }
+  }
+  #evWindowResize() {
+    window.addEventListener("resize", () => {
+      this.navbarCurrentPosition = this.navbarStartPosition;
+      this.navbarStartPosition = 0;
+      this.navbarEndPosition = this.navItemsWidth - this.navbar.clientWidth;
+      this.logValues("window resize");
+      this.navbar.style.transform =
+        "translateX(" + this.navbarStartPosition + "px)";
 
-  //debugger;
-  toggleButtonsVisibility();
-  /*if (navItemsWidth > document.querySelector(".nav-container").clientWidth) {
-    document
-      .querySelectorAll(".toggle")
-      .forEach((el) => (el.style.visibility = "visible"));
-  } else {
-    document.querySelector(".nav").classList.remove("justify-content-end");
-    document
-      .querySelectorAll(".toggle")
-      .forEach((el) => (el.style.visibility = "hidden"));
-  }*/
-});
+      this.#toggleButtonsVisibility();
+    });
+  }
+} //end of AlvStdTabView class
+
+var alvStdTabsView = new StdTabView(100);
